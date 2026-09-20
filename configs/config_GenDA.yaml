@@ -1,0 +1,73 @@
+# Paths below are relative to the repository root.
+# --- Model Architecture ---
+model_type: "GenDA"
+backbone: "modernbert"  # options: modernbert, llama
+hidden_dim: 1024
+layers: 12
+heads: 16
+dropout: 0.1
+attn_implementation: "flash_attention_2"  # flash_attention_2, sdpa
+global_attn_every_n_layers: 1             # ModernBERT only
+
+# --- Llama-specific Architecture (ignored when backbone=modernbert) ---
+intermediate_size: 2730  # configs/config_GenDA.yaml
+num_kv_heads: 16         # full MHA (set < heads for GQA)
+rope_theta: 10000.0
+position_encoding: "rope"  # rope | alibi | none | learned
+
+# --- Training Hyperparameters ---
+learning_rate: 2e-4 # 3e-4 too high for GenDA, causes grad norm vanishing
+entropy_exponent: 1.0 # defualt is 1.0
+batch_size: 96
+accumulation_steps: 4
+epochs: 1000
+total_steps: 50000
+warmup_steps: 3000
+weight_decay: 0.01
+patience: 30 # steps
+val_interval: 300
+cond_dropout_rate: 0.1
+seed: 2026
+
+# --- Data Processing ---
+kmer_size: 1
+multi_mask_factor: 1
+max_token_len: 4096  # Matches 8kb window for single neucleotide resolustion
+dataset: "HUMAN_GENOME"  # HUMAN_GENOME
+masking_strategy: "adaptive_span" # random, span, adaptive_span, adaptive
+mixture_random_fraction: 0.2 # Fraction of batches that use random masking (calibration). 0=off.
+span_lambda: 100 # masks ~100bp chunks (12bp is roughly TFBS size)
+
+# --- Inverse Curriculum Masking Ratio (manual stage gating) ---
+# 0 = disabled (uniform random masking)
+# 1 = Global Scaffolding (60–100% mask)
+# 2 = Structural Grammar   (20–70% mask)
+# 3 = High-Res Refinement  (5–30% mask + 10% full-mask de novo)
+curriculum_stage: 0
+
+use_span_weighting: false
+max_span_weight: 1.0
+adaptive_sliding_window: 9
+balance_classes: false
+debug: false
+
+# --- Human Genome Specifics ---
+seq_len: 4096         
+jitter_bp: 300        
+functional_ratio: 0.8
+
+# --- Human Genome Paths ---
+fasta_path: "data/reference/hg38.fa"
+gtf_path: "data/reference/gencode.v49.annotation.gtf"
+repeatmasker_path: "data/reference/hg38.fa.out"
+ccre_bed_path: "data/reference/hg38_enhancers_only.bed"
+
+# --- ClinVar In-Loop Evaluation (optional) ---
+# Set clinvar_eval: true to score ClinVar AUROC at every val_interval.
+# clinvar_eval_parquet is REQUIRED when clinvar_eval is true.
+clinvar_eval: false
+clinvar_eval_parquet: "data/clinvar/clinvar_ready_for_genda_SNV.parquet"
+clinvar_eval_win: 4096
+clinvar_eval_bs: 64
+clinvar_eval_n: 200       # null = use all variants; set to e.g. 2000 for speed
+clinvar_select_region: "overall"  # "overall" | exon | intron | promoter | enhancer | repeat
