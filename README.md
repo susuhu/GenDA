@@ -1,4 +1,4 @@
-# GenDA: Genomic Density-optimized Absorbing Diffusion
+# GenDA: When Genomic Masking Priors Fail to Transfer: Strong Variant Prediction, Weak Functional Generation
 
 [![Paper on arXiv](https://img.shields.io/badge/arXiv-2609.04861-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2609.04861) [![Code on GitHub](https://img.shields.io/badge/GitHub-Code-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/susuhu/GenDA)
 
